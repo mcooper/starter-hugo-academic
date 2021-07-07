@@ -1,0 +1,32 @@
+.avatar-circle {
+  border-radius: 30px;
+}
+
+.carousel-item {
+  background-size: cover;
+  background-position: center;
+}
+
+.navbar-link:hover {
+  color: #275DF2; 
+}
+
+.carousel-indicators {
+  display: none;
+}
+
+.carousel-control-prev {
+  display: none;
+}
+
+.carousel-control-next {
+  display: none;
+}
+
+.powered-by:nth-child(2){
+  display: none;
+}
+
+.isotope-item{
+  padding-bottom: 35px;
+}

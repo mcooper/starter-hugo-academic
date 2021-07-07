@@ -5,10 +5,12 @@
 
 # Appearance
 
-theme: minimal
-day_night: true
+theme: mine
+day_night: false
 font: ''
 font_size: L
+
+plugins_css: ["custom"]
 
 # SEO
 
@@ -133,13 +135,13 @@ comments:
     show_count: true
   commento:
     url: ''
-search:
-  provider: wowchemy
-  algolia:
-    app_id: ''
-    api_key: ''
-    index_name: ''
-    show_logo: false
+    # search:
+    #   provider: wowchemy
+    #   algolia:
+    #     app_id: ''
+    #     api_key: ''
+    #     index_name: ''
+    #     show_logo: false
 map:
   provider: ''
   api_key: ''

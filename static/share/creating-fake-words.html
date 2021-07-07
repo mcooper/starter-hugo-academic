@@ -1,0 +1,460 @@
+<!DOCTYPE HTML>
+<html>
+<link rel="stylesheet" type="text/css" href="style.css">
+<head>
+<img id="banner" src="../img/Escheresque.jpg" alt="Banner Image"/>
+</head>
+    <div class=middle>
+        <h1>Creating "Fake" Words</h1>
+        <br><br>
+        <h3>Inspiration</h3>
+        Two of my favorite videos on youtube are <a href="https://www.youtube.com/watch?v=Vt4Dfa4fOEY">this</a> one and <a href="https://www.youtube.com/watch?v=-VsmF9m_Nt8">this</a> one.  In both videos, people imitate what English sounds like to non-native speakers.  What they are speaking has all of the same sounds as English.  They are using all of the vowels and consonants in a native speakers' repertoire, and none of the sounds that English speakers don't use, like the pharyngealized consonants that are in Arabic or the uvular trill that the French use as an r.
+        <br><br>
+        What's more, the people in these videos use English sounds <i>in an English order</i>.  This is because simply stringing together random sounds would not sound like English; you would have impossible vowel polypthongs and consonant clusters.  Instead, they use combinations like s-t-r-a-y and a-n-t rather than y-r-t-s-a and a-t-n, following implicit rules about the order that sounds must be in.  These rules are known to linguistics as Phonotactics, and they vary from one language to another.
+        <br><br>
+        I wanted to see if I could do the same thing - create words that sound like English words.  Not only would this produce some fun gibberish, but it would help to explore the probability that certain combinations of words exist in English.  I wanted to see what words are the most likely to exist - given English phonotactics.  I also wanted to see what combination of sounds would be the most likely to exist in English that was not an actual English word.
+        <br><br>
+        <h3>Methodology</h3>
+        Rather than model the phonotactics of English using rules, as most linguists do, I thought it would be fun to build a model based on data.  To do this, I got phonological data from the <a href="http://www.speech.cs.cmu.edu/cgi-bin/cmudict">Carnegie Mellon Pronouncing Dictionary</a> and a word frequency list.  The pronouncing dictionary describes how each of the 113,000 words it contains are pronounced in North American English.  For example, the word "document" is spelled out as D-AA-K-Y-UW-M-EH-N-T.  I then mapped the words in the frequency table to their pronunciation in the phonological dictionary, and then built a 2nd-order Markov model, describing the probability of any English sound occurring after two other sounds, as well as the probability that a sound would be at the start or end of an English word.
+        <br><br>
+        Markov models describe the probability of a system changing between multiple states.  These kinds of models are often used in Natural Language Processing, where the system is a sentence, and the states are the word that is about to come next.  This is the kind of model your smart phone is using when it suggests words when you are texting.  If you type "I think I'll", your phone suggests "be", "have", or "just" as the next word to type because these are very common words to follow that phrase.  It doesn't suggest "cogitate" because "I think I'll cogitate" is a phrase that people rarely text to each other.  I did something similar, only I used individual sounds (or phonemes) as the unit of analysis, and not words.
+        <br><br>
+        I did all of the analysis in R, and because I couldn't find a good package for 2nd-order Markov models, I just build the model myself.  It is essentially a three-dimensional array, describing the possibility of phoneme z occurring, given that phonemes x and y were the last two to occur.  Because English has 39 unique phonemes and I included a null state, the array is 40 x 40 x 40 dimensions.  The scripts for this project are in a <a href="https://www.github.com/mcooper/Markov-Phonology">github repo</a>.
+        <br><br>
+        <h3>Example</h3>
+        As an example, lets say we want to generate a string of sounds, where each sound is the most likely to occur given the two sounds before it.  The first thing to do is the see which letter is the most likely to start a word.  Because my model has a null state, we'll select the 40 x 40 matrix from the three-dimensional array where the first step is null.  Then, because we don't have a second state, we will sum one margin of the matrix to get a vector of 40 probabilities, one for each sound in English.  For the sounds NG and UH (as in put), the probability is 0, because no English words begin with these sounds.  As it happens, the most likely phoneme to begin a word is AH (as in A-bout or bUs), which is the sound that starts 12.5% of all words.
+        <br><br>
+        Now that we have two steps (null and AH), we can look at the probability of any subsequent phoneme by selecting the vector from our model where the first dimension is null and the second dimension is AH.  This shows that the most likely phoneme to come after a word that starts with AH is N.  So far, nothing too surprising - a lot of words begin with the prefix "un-".  
+        <br><br>
+        Now that we have two letters, we can find the most likely word to follow these two, which is D.  To be clear, at this point the model is not counting the conditional probability of an initial null state, so D is the most likely sound to occur after an AH and an N anywhere in a word.
+		<br><br>
+		As it happens, the next most likely state is the null state again, because N-D is a very common way for English words to end (ie, bend, mend, and, land, cleaned)
+
+        <h3>Results</h3>
+        <h4>Probabilities Based on Word Length</h4>
+        <h5>Two Sounds</h5>
+        <table style="width:100%">
+        <tr>
+        <th>Word Sounds</th>
+        <th>Probability</th> 
+        <th>English Approximate</th>
+        </tr><tr>
+	<td> 0.DH.AH.0 </td>
+	<td> 0.004522638 </td>
+	<td> The </td>
+</tr>
+<tr>
+	<td> 0.B.IY.0 </td>
+	<td> 0.001499964 </td>
+	<td> Be </td>
+</tr>
+<tr>
+	<td> 0.T.UW.0 </td>
+	<td> 0.001202279 </td>
+	<td> Too </td>
+</tr>
+<tr>
+	<td> 0.AH.N.0 </td>
+	<td> 0.001096812 </td>
+	<td> Un </td>
+</tr>
+<tr>
+	<td> 0.AH.V.0 </td>
+	<td> 0.001030409 </td>
+	<td> Of </td>
+</tr>
+<tr>
+	<td> 0.IH.N.0 </td>
+	<td> 0.000866687 </td>
+	<td> In </td>
+</tr>
+<tr>
+	<td> 0.IH.T.0 </td>
+	<td> 0.0001943523 </td>
+	<td> It </td>
+</tr>
+<tr>
+	<td> 0.S.T.0 </td>
+	<td> 0.0001712434 </td>
+	<td> <i>St</i></td>
+</tr>
+<tr>
+	<td> 0.Y.UW.0 </td>
+	<td> 0.0001402617 </td>
+	<td> You </td>
+</tr>
+<tr>
+	<td> 0.AE.T.0 </td>
+	<td> 0.0001229933 </td>
+	<td> At </td>
+</tr>
+<tr>
+	<td> 0.AO.R.0 </td>
+	<td> 0.0001148554 </td>
+	<td> Or </td>
+</tr>
+<tr>
+	<td> 0.HH.IY.0 </td>
+	<td> 0.00009733339 </td>
+	<td> He </td>
+</tr>
+<tr>
+	<td> 0.AA.N.0 </td>
+	<td> 0.00007446371 </td>
+	<td> On </td>
+</tr>
+<tr>
+	<td> 0.D.UW.0 </td>
+	<td> 0.00006365913 </td>
+	<td> Do </td>
+</tr>
+<tr>
+	<td> 0.AE.Z.0 </td>
+	<td> 0.0000542704 </td>
+	<td> Is </td>
+</tr>
+</table>
+		The word "ST" could obviously never be an English word, and illustrates the limitations of only having a 2nd order Markov model (as opposed to a 3rd or 4th order model).  Because many words begin and end with ST, the model generated it as a plausible word.  However, all of the other generated words are actual English words (if you count "un" as a word).
+        <h5>Three Sounds</h5>
+        <table style="width:100%">
+        <tr>
+        <th>Word Sounds</th>
+        <th>Probability</th> 
+        <th>English Approximate</th>
+        </tr><tr>
+	<td> 0.AH.N.D.0 </td>
+	<td> 0.00005699995 </td>
+	<td> <i>Und</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.T.0 </td>
+	<td> 0.00000807424 </td>
+	<td> <i>Unt</i> </td>
+</tr>
+<tr>
+	<td> 0.DH.AE.T.0 </td>
+	<td> 0.000006108426 </td>
+	<td> That </td>
+</tr>
+<tr>
+	<td> 0.F.AO.R.0 </td>
+	<td> 0.000004368796 </td>
+	<td> For </td>
+</tr>
+<tr>
+	<td> 0.HH.AE.V.0 </td>
+	<td> 0.000002643547 </td>
+	<td> Have </td>
+</tr>
+<tr>
+	<td> 0.K.AH.N.0 </td>
+	<td> 0.000002446496 </td>
+	<td> <i>Cun</i> </td>
+</tr>
+<tr>
+	<td> 0.IH.N.T.0 </td>
+	<td> 0.000002331642 </td>
+	<td> Int </td>
+</tr>
+<tr>
+	<td> 0.IH.N.D.0 </td>
+	<td> 0.00000224113 </td>
+	<td> <i>Ind</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.S.0 </td>
+	<td> 0.000001402133 </td>
+	<td> <i>Unse</i> </td>
+</tr>
+<tr>
+	<td> 0.W.AH.N.0 </td>
+	<td> 0.000001376276 </td>
+	<td> Won </td>
+</tr>
+<tr>
+	<td> 0.W.IH.DH.0 </td>
+	<td> 0.000001060417 </td>
+	<td> With </td>
+</tr>
+<tr>
+	<td> 0.K.AH.L.0 </td>
+	<td> 0.000001058841 </td>
+	<td> Cull </td>
+</tr>
+<tr>
+	<td> 0.M.AH.N.0 </td>
+	<td> 0.000001041833 </td>
+	<td> <i>Mun</i> </td>
+</tr>
+<tr>
+	<td> 0.K.AH.M.0 </td>
+	<td> 0.0000009272838 </td>
+	<td> Come </td>
+</tr>
+<tr>
+	<td> 0.DH.EH.R.0 </td>
+	<td> 0.0000008448845 </td>
+	<td> There </td>
+</tr>
+</table>
+		Here, we're starting to see some more words that look like English, but aren't, like <i>Mun</i>, <i>Ind</i>, and <i>Unse</i>.
+        <h5>Four Sounds</h5>
+        <table style="width:100%">
+        <tr>
+        <th>Word Sounds</th>
+        <th>Probability</th> 
+        <th>English Approximate</th>
+        </tr><tr>
+	<td> 0.K.AH.N.D.0 </td>
+	<td> 0.0000001271414 </td>
+	<td> <i>Cunned</i> </td>
+</tr>
+<tr>
+	<td> 0.W.AH.N.D.0 </td>
+	<td> 0.00000007152339 </td>
+	<td> <i>Wunned</i> </td>
+</tr>
+<tr>
+	<td> 0.M.AH.N.D.0 </td>
+	<td> 0.00000005414278 </td>
+	<td> <i>Munned</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.T.UW.0 </td>
+	<td> 0.0000000407905 </td>
+	<td> Unto </td>
+</tr>
+<tr>
+	<td> 0.S.AH.N.D.0 </td>
+	<td> 0.0000000277637 </td>
+	<td> <i>Sund</i> </td>
+</tr>
+<tr>
+	<td> 0.K.AH.N.T.0 </td>
+	<td> 0.00000001801002 </td>
+	<td> Cunt </td>
+</tr>
+<tr>
+	<td> 0.R.AH.N.D.0 </td>
+	<td> 0.00000001518637 </td>
+	<td> <i>Runned</i> </td>
+</tr>
+<tr>
+	<td> 0.IH.N.T.UW.0 </td>
+	<td> 0.00000001177929 </td>
+	<td> Into </td>
+</tr>
+<tr>
+	<td> 0.W.AH.N.T.0 </td>
+	<td> 0.00000001013153 </td>
+	<td> <i>Wunt</i> </td>
+</tr>
+<tr>
+	<td> 0.T.AH.N.D.0 </td>
+	<td> 0.00000000914591 </td>
+	<td> Tonned </td>
+</tr>
+<tr>
+	<td> 0.P.AH.N.D.0 </td>
+	<td> 0.000000008128035 </td>
+	<td> Punned </td>
+</tr>
+<tr>
+	<td> 0.M.AH.N.T.0 </td>
+	<td> 0.000000007669511 </td>
+	<td> <i>Munt</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.T.ER.0 </td>
+	<td> 0.000000007211726 </td>
+	<td> <i>Unter</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.AH.L.0 </td>
+	<td> 0.000000007179385 </td>
+	<td> <i>Unnel</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.S.T.0 </td>
+	<td> 0.000000006743533 </td>
+	<td> <i>Unst</i> </td>
+</tr>
+</table>
+		Here we have a lot of interesting pseudo-words, with common English consonants and vowels making English-ey words, as well as obscure English words.
+        <h5>Five Sounds</h5>
+<table style="width:100%">
+        <tr>
+        <th>Word Sounds</th>
+        <th>Probability</th> 
+        <th>English Approximate</th>
+        </tr><tr>
+	<td> 0.F.R.AH.N.D.0 </td>
+	<td> 0.0000000002399798 </td>
+	<td> <i>Frunned</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.D.AH.N.0 </td>
+	<td> 0.0000000001882987 </td>
+	<td> Undone </td>
+</tr>
+<tr>
+	<td> 0.P.R.AH.N.D.0 </td>
+	<td> 0.0000000001701515 </td>
+	<td> <i>Prund</i> </td>
+</tr>
+<tr>
+	<td> 0.S.T.AH.N.D.0 </td>
+	<td> 0.0000000001642681 </td>
+	<td> Stunned </td>
+</tr>
+<tr>
+	<td> 0.IH.K.AH.N.D.0 </td>
+	<td> 0.0000000001213712 </td>
+	<td> <i>Ih-kund</i> </td>
+</tr>
+<tr>
+	<td> 0.IH.T.AH.N.D.0 </td>
+	<td> 0.0000000001108632 </td>
+	<td> <i>Ih-tund</i> </td>
+</tr>
+<tr>
+	<td> 0.K.AH.N.T.UW.0 </td>
+	<td> 0.00000000009098537 </td>
+	<td> <i>Kuhnto</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.T.AH.N.0 </td>
+	<td> 0.00000000008843417 </td>
+	<td> <i>Untonne</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.AH.N.D.0 </td>
+	<td> 0.00000000007633087 </td>
+	<td> <i>Unund</i> </td>
+</tr>
+<tr>
+	<td> 0.T.R.AH.N.D.0 </td>
+	<td> 0.00000000006627167 </td>
+	<td> <i>Trunned</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.T.AH.L.0 </td>
+	<td> 0.00000000006065741 </td>
+	<td> <i>Untal</i> </td>
+</tr>
+<tr>
+	<td> 0.W.AH.N.T.UW.0 </td>
+	<td> 0.00000000005118381 </td>
+	<td> <i>Wunto</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.D.AH.L.0 </td>
+	<td> 0.0000000000463149 </td>
+	<td> <i>Undul</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.D.IH.N.0 </td>
+	<td> 0.00000000004246792 </td>
+	<td> <i>Undin</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.T.IH.N.0 </td>
+	<td> 0.00000000003960218 </td>
+	<td> <i>Untin</i> </td>
+</tr>
+</table>
+		Here we only have two actual English words - Undone and Stunned
+        <h5>Six Sounds</h5>       
+        <table style="width:100%">
+        <tr>
+        <th>Word Sounds</th>
+        <th>Probability</th> 
+        <th>English Approximate</th>
+        </tr><tr>
+	<td> 0.AH.N.D.AH.N.D.0 </td>
+	<td> 0.000000000009785653 </td>
+	<td> <i>Undund</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.T.AH.N.D.0 </td>
+	<td> 0.000000000004595815 </td>
+	<td> <i>Untonned</i> </td>
+</tr>
+<tr>
+	<td> 0.K.AH.M.AH.N.D.0 </td>
+	<td> 0.000000000001548438 </td>
+	<td> <i>Commund</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.D.AH.N.T.0 </td>
+	<td> 0.000000000001386171 </td>
+	<td> <i>Undunt</i> </td>
+</tr>
+<tr>
+	<td> 0.IH.N.T.AH.N.D.0 </td>
+	<td> 0.000000000001327158 </td>
+	<td> <i>Intunned</i> </td>
+</tr>
+<tr>
+	<td> 0.F.AO.R.AH.N.D.0 </td>
+	<td> 0.00000000000126397 </td>
+	<td> <i>Forund</i> </td>
+</tr>
+<tr>
+	<td> 0.DH.AE.T.AH.N.D.0 </td>
+	<td> 0.0000000000009842173 </td>
+	<td> <i>Thatunned</i> </td>
+</tr>
+<tr>
+	<td> 0.B.IH.K.AH.N.D.0 </td>
+	<td> 0.0000000000008954178 </td>
+	<td> <i>Bikand</i> </td>
+</tr>
+<tr>
+	<td> 0.S.AH.M.AH.N.D.0 </td>
+	<td> 0.0000000000007720008 </td>
+	<td> Summoned </td>
+</tr>
+<tr>
+	<td> 0.AH.N.S.AH.N.D.0 </td>
+	<td> 0.0000000000006795212 </td>
+	<td> <i>Unsunned</i> </td>
+</tr>
+<tr>
+	<td> 0.AH.N.T.AH.N.T.0 </td>
+	<td> 0.000000000000651013 </td>
+	<td> <i>Untonned</i> </td>
+</tr>
+<tr>
+	<td> 0.S.T.R.AH.N.D.0 </td>
+	<td> 0.0000000000005887306 </td>
+	<td> <i>Strunned</i> </td>
+</tr>
+<tr>
+	<td> 0.DH.EH.R.AH.N.D.0 </td>
+	<td> 0.0000000000005820045 </td>
+	<td> <i>Therund</i> </td>
+</tr>
+<tr>
+	<td> 0.R.IH.K.AH.N.D.0 </td>
+	<td> 0.0000000000005210712 </td>
+	<td> <i>Rickund</i> </td>
+</tr>
+<tr>
+	<td> 0.W.IH.D.AH.N.D.0 </td>
+	<td> 0.0000000000004736243 </td>
+	<td> <i>Widunned</i> </td>
+</tr>
+</table>
+
+	<h3>Discussion and Caveats</h3>
+	Interestingly, it seems that english has a lot of T's, D's, N's and Schwas (the AH sound).  Even though I am a native English speaker, I was quite surprised by how many a lot of these sounds kept coming up.  Some of the longer words seem like something Lewis Carroll would have invented -  "Winunned" and "Undunt" seem like they could have come from the Jabberwocky.
+	<br><br>
+	It is surprising how the model generated real English for the words with only two or three phonemes, but then began generating many words that sound like English but have no meaning for the longer words.
+	<br><br>
+	It's clear that more than a 2nd order model is needed to truly capture the hidden rules of English Phonotactics.  Anyone who has a formal background in phonotactics will tell you that the placement of phonemes is affected by more than just the two preceding phonemes, and the flaws in this model definitely demonstrate that.
+	<br><br>
+	Also, my phoneme-only model was unable to capture any of the prosody or other variables that give English its unique flavor.  Indeed, if machines could better capture this, Siri would sound a lot more realistic.
+	</div>
+    <hr>
+</html>
